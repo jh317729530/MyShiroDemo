@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+     http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+    <description>Redis缓存配置</description>
+
+    <!-- jedis pool 配置-->
+    <bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
+        <property name="maxIdle" value="100"/><!--最大闲置-->
+        <property name="minIdle" value="10"/><!--最小闲置-->
+        <property name="testOnBorrow" value="true"/><!--可以获取-->
+    </bean>
+
+    <bean id="jedisPool" class="redis.clients.jedis.JedisPool">
+        <constructor-arg index="0" ref="jedisPoolConfig"/>
+        <!--端口，默认6379-->
+        <constructor-arg index="1" value="127.0.0.1" name="host" type="java.lang.String"/>
+        <constructor-arg index="2" value="6379" name="port" type="int"/>
+        <constructor-arg index="3" value="5000" name="timeout" type="int"/>
+    </bean>
+
+</beans>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context-4.0.xsd
+	http://www.springframework.org/schema/task
+	http://www.springframework.org/schema/task/spring-task-4.0.xsd
+	http://www.springframework.org/schema/mvc
+	http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd">
+
+
+    <!--  会话Session ID 生成器-->
+    <bean id="sessionIdGenerator" class="org.apache.shiro.session.mgt.eis.JavaUuidSessionIdGenerator"/>
+
+    <!--  授权 认证 realm-->
+    <bean id="sampleRealm" class="com.gunn.common.shiro.token.sampleRealm"/>
+
+    <!-- 会话 Cookie 模板-->
+    <bean id="sessionIdCookie" class="org.apache.shiro.web.servlet.SimpleCookie">
+        <!--cookie 的 name-->
+        <constructor-arg value="gunn"/>
+        <property name="httpOnly" value="true"/>
+        <property name="maxAge" value="30"/>
+    </bean>
+
+    <!-- 用户信息记住我 cookie-->
+    <bean id="rememberMeCookie" class="org.apache.shiro.web.servlet.SimpleCookie">
+        <constructor-arg value="gunn_re"/>
+        <property name="httpOnly" value="true"/>
+        <property name="maxAge" value="2592000"/><!--30天 ，记住我30天-->
+    </bean>
+
+    <!--rememberMeManager-->
+    <bean id="rememberMeManager" class="org.apache.shiro.web.mgt.CookieRememberMeManager">
+        <!-- rememberMe cookie加密的密钥 建议每个项目都不一样 默认AES算法 密钥长度（128 256 512 位）-->
+        <property name="cipherKey" value="#{T(org.apache.shiro.codec.Base64).decode('3AvVhmFLUs0KTA3Kprsdag==')}"/>
+        <property name="cookie" ref="rememberMeCookie"/>
+    </bean>
+
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realm" ref="sampleRealm"/>
+        <property name="rememberMeManager" ref="rememberMeManager"/>
+
+    </bean>
+
+    <!--Session Manager-->
+    <bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
+        <property name="sessionValidationInterval" value="1800000"/>
+        <property name="sessionDAO"  ref="customShiroSessionDAO"/>
+    </bean>
+
+    <!--自定义sessionDAO-->
+    <bean id="customShiroSessionDAO" class="com.gunn.common.shiro.session.CustomShiroSessionDAO">
+
+    </bean>
+
+</beans>
