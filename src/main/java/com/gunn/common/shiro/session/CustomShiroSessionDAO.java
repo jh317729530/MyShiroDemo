@@ -1,6 +1,8 @@
 package com.gunn.common.shiro.session;
 
 import com.gunn.common.shiro.cache.JedisManager;
+import com.gunn.common.util.LoggerUtils;
+import com.gunn.common.util.SerializeUtil;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.session.UnknownSessionException;
 import org.apache.shiro.session.mgt.eis.AbstractSessionDAO;
@@ -10,14 +12,20 @@ import java.util.Collection;
 
 public class CustomShiroSessionDAO extends AbstractSessionDAO {
 
-    private JedisManager jedisManager;
+    public static final String REDIS_SHIRO_SESSION = "gunn-shiro-session";
 
-    public JedisManager getJedisManager() {
-        return jedisManager;
+    private static final int SESSION_VAL_TIME_SPAN = 18000;
+
+    private static final int DB_INDEX = 1;
+
+    private ShiroSessionRepository sessionRepository;
+
+    public ShiroSessionRepository getSessionRepository() {
+        return sessionRepository;
     }
 
-    public void setJedisManager(JedisManager jedisManager) {
-        this.jedisManager = jedisManager;
+    public void setSessionRepository(ShiroSessionRepository sessionRepository) {
+        this.sessionRepository = sessionRepository;
     }
 
     /**
@@ -27,10 +35,8 @@ public class CustomShiroSessionDAO extends AbstractSessionDAO {
      */
     @Override
     protected Serializable doCreate(Session session) {
-        if (session == null || session.getId() == null) {
-            throw new NullPointerException("session is empty");
-        }
-        return null;
+        sessionRepository.saveSession(session);
+        return session.getId();
     }
 
     /**
@@ -40,7 +46,8 @@ public class CustomShiroSessionDAO extends AbstractSessionDAO {
      */
     @Override
     protected Session doReadSession(Serializable serializable) {
-        return null;
+        return sessionRepository.getSession(serializable);
+
     }
 
     /**
@@ -50,7 +57,7 @@ public class CustomShiroSessionDAO extends AbstractSessionDAO {
      */
     @Override
     public void update(Session session) throws UnknownSessionException {
-
+        sessionRepository.saveSession(session);
     }
 
     /**
@@ -59,7 +66,14 @@ public class CustomShiroSessionDAO extends AbstractSessionDAO {
      */
     @Override
     public void delete(Session session) {
-
+        if (session == null) {
+            LoggerUtils.error(getClass(), "Session 不能为null");
+            return;
+        }
+        Serializable id = session.getId();
+        if (id != null) {
+            sessionRepository.deleteSession(session);
+        }
     }
 
     /**

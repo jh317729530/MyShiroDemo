@@ -21,15 +21,13 @@
 
     <!-- 会话 Cookie 模板-->
     <bean id="sessionIdCookie" class="org.apache.shiro.web.servlet.SimpleCookie">
-        <!--cookie 的 name-->
-        <constructor-arg value="gunn"/>
         <property name="httpOnly" value="true"/>
         <property name="maxAge" value="30"/>
     </bean>
 
     <!-- 用户信息记住我 cookie-->
     <bean id="rememberMeCookie" class="org.apache.shiro.web.servlet.SimpleCookie">
-        <constructor-arg value="gunn_re"/>
+        <constructor-arg value="reJSESSION"/>
         <property name="httpOnly" value="true"/>
         <property name="maxAge" value="2592000"/><!--30天 ，记住我30天-->
     </bean>
@@ -44,18 +42,58 @@
     <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
         <property name="realm" ref="sampleRealm"/>
         <property name="rememberMeManager" ref="rememberMeManager"/>
+        <property name="sessionManager" ref="sessionManager"/>
 
+    </bean>
+
+
+    <!--session监听器-->
+    <bean id="customSessionListener" class="com.gunn.common.shiro.listener.CustomShiroSessionListener">
+        <property name="shiroSessionRepository" ref="jedisShiroSessionRepository"/>
     </bean>
 
     <!--Session Manager-->
     <bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
         <property name="sessionValidationInterval" value="1800000"/>
+
+        <property name="globalSessionTimeout" value="18000000"/><!--session有效时间为半小时-->
         <property name="sessionDAO"  ref="customShiroSessionDAO"/>
+
+        <!--session监听-->
+        <property name="sessionListeners">
+            <list>
+                <ref bean="customSessionListener"/>
+            </list>
+        </property>
+
+        <property name="sessionValidationScheduler" ref="sessionValidationScheduler"/>
+
+        <property name="sessionValidationSchedulerEnabled" value="true"/>
+
+        <property name="deleteInvalidSessions" value="true"/>
+
+        <property name="sessionIdCookie" ref="sessionIdCookie"/>
     </bean>
 
+    <!-- 会话验证调度器-->
+    <bean id="sessionValidationScheduler" class="org.apache.shiro.session.mgt.ExecutorServiceSessionValidationScheduler">
+        <!--检查时间间隔 默认60分钟-->
+        <!--<property name="interval" value="18000000"/>-->
+        <property name="sessionManager" ref="sessionManager"/>
+    </bean>
+
+    <!-- redis管理器，基本的redis操作-->
+    <bean id="jedisManager" class="com.gunn.common.shiro.cache.JedisManager">
+        <property name="jedisPool" ref="jedisPool"/>
+    </bean>
+
+    <bean id="jedisShiroSessionRepository" class="com.gunn.common.shiro.session.JedisShiroSessionRepository">
+        <property name="jedisManager" ref="jedisManager"/>
+    </bean>
     <!--自定义sessionDAO-->
     <bean id="customShiroSessionDAO" class="com.gunn.common.shiro.session.CustomShiroSessionDAO">
-
+        <property name="sessionRepository" ref="jedisShiroSessionRepository"/>
+        <property name="sessionIdGenerator" ref="sessionIdGenerator"/><!--其实这行可以不指定sessionid生成器-->
     </bean>
 
 </beans>
